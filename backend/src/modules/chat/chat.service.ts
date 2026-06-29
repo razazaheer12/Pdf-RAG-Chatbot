@@ -5,10 +5,7 @@ import { LangchainService } from '../../services/langchain/langchain.service';
 export class ChatService {
   constructor(private readonly langchain: LangchainService) {}
 
-  async *streamAnswer(
-    question: string,
-    namespace: string,
-  ): AsyncIterable<string> {
-    yield* this.langchain.queryRAG(question, namespace);
+  async *streamAnswer(question: string, namespace: string, model?: string): AsyncIterable<string> {
+    yield* this.langchain.queryRAG(question, namespace, model);
   }
 }

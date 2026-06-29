@@ -1,5 +1,6 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { DEFAULT_MODEL } from './available-models';
 
 @Injectable()
 export class GeminiService implements OnModuleInit {
@@ -13,7 +14,11 @@ export class GeminiService implements OnModuleInit {
     this.logger.log('✅ OpenRouter client initialized');
   }
 
-  async *streamAnswer(systemPrompt: string, userMessage: string): AsyncIterable<string> {
+  async *streamAnswer(
+    systemPrompt: string,
+    userMessage: string,
+    model: string = DEFAULT_MODEL,
+  ): AsyncIterable<string> {
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -21,7 +26,7 @@ export class GeminiService implements OnModuleInit {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemma-4-31b-it:free',
+        model,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userMessage },
@@ -30,19 +35,18 @@ export class GeminiService implements OnModuleInit {
       }),
     });
 
-    this.logger.log(`OpenRouter status: ${response.status}`);
+    this.logger.log(`Using model: ${model}`);
 
     if (!response.ok) {
       const errorText = await response.text();
       this.logger.error(`OpenRouter error: ${errorText}`);
-      yield 'Sorry, AI service error. Please try again.';
+      yield 'Sorry, this model is currently unavailable. Please try a different model.';
       return;
     }
 
     const reader = response.body!.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
-    let tokenCount = 0;
 
     while (true) {
       const { done, value } = await reader.read();
@@ -56,17 +60,11 @@ export class GeminiService implements OnModuleInit {
         const trimmed = line.trim();
         if (!trimmed.startsWith('data: ')) continue;
         const data = trimmed.slice(6);
-        if (data === '[DONE]') {
-          this.logger.log(`Stream done. Total tokens: ${tokenCount}`);
-          return;
-        }
+        if (data === '[DONE]') return;
         try {
           const parsed = JSON.parse(data);
           const token = parsed.choices?.[0]?.delta?.content;
-          if (token) {
-            tokenCount++;
-            yield token;
-          }
+          if (token) yield token;
         } catch {}
       }
     }

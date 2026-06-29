@@ -1,11 +1,17 @@
-import { Controller, Post, Body, Res } from '@nestjs/common';
+import { Controller, Post, Get, Body, Res } from '@nestjs/common';
 import type { Response } from 'express';
 import { ChatService } from './chat.service';
 import { QueryDto } from './dto/query.dto';
+import { AVAILABLE_MODELS } from '../../services/gemini/available-models';
 
 @Controller('chat')
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
+
+  @Get('models')
+  getModels() {
+    return AVAILABLE_MODELS;
+  }
 
   @Post('query')
   async query(@Body() body: QueryDto, @Res() res: Response) {
@@ -19,6 +25,7 @@ export class ChatController {
       for await (const token of this.chatService.streamAnswer(
         body.question,
         body.namespace,
+        body.model,
       )) {
         const payload = JSON.stringify({ token });
         res.write(`data: ${payload}\n\n`);

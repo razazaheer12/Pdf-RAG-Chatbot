@@ -13,38 +13,38 @@ export function useChat(namespace: string) {
   const [isStreaming, setIsStreaming] = useState(false);
 
   const sendMessage = useCallback(
-    async (question: string) => {
-      if (!question.trim() || isStreaming) return;
+  async (question: string, model?: string) => {
+    if (!question.trim() || isStreaming) return;
 
-      const userMsg: Message = {
-        id: `user-${Date.now()}`,
-        role: 'user',
-        content: question.trim(),
-        timestamp: new Date(),
-      };
+    const userMsg: Message = {
+      id: `user-${Date.now()}`,
+      role: 'user',
+      content: question.trim(),
+      timestamp: new Date(),
+    };
 
-      const assistantId = `assistant-${Date.now()}`;
-      const assistantMsg: Message = {
-        id: assistantId,
-        role: 'assistant',
-        content: '',
-        timestamp: new Date(),
-        isStreaming: true,
-      };
+    const assistantId = `assistant-${Date.now()}`;
+    const assistantMsg: Message = {
+      id: assistantId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date(),
+      isStreaming: true,
+    };
 
-      setMessages((prev) => [...prev, userMsg, assistantMsg]);
-      setIsStreaming(true);
+    setMessages((prev) => [...prev, userMsg, assistantMsg]);
+    setIsStreaming(true);
 
-      try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/chat/query`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ question: question.trim(), namespace }),
-          },
-        );
-
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/chat/query`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: question.trim(), namespace, model }),
+        },
+      );
+      
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
         const reader = response.body!.getReader();

@@ -64,18 +64,18 @@ export class LangchainService implements OnModuleInit {
     return vectors.length;
   }
 
-  async *queryRAG(question: string, namespace: string): AsyncIterable<string> {
-    const queryEmbedding = await this.embedText(question);
-    const matches = await this.pinecone.querySimilar(queryEmbedding, 4, namespace);
+  async *queryRAG(question: string, namespace: string, model?: string): AsyncIterable<string> {
+  const queryEmbedding = await this.embedText(question);
+  const matches = await this.pinecone.querySimilar(queryEmbedding, 4, namespace);
 
-    const context = matches
-      .filter((m) => (m.score ?? 0) > 0.4)
-      .map((m) => (m.metadata?.text as string) ?? '')
-      .filter(Boolean)
-      .join('\n\n---\n\n');
+  const context = matches
+    .filter((m) => (m.score ?? 0) > 0.4)
+    .map((m) => (m.metadata?.text as string) ?? '')
+    .filter(Boolean)
+    .join('\n\n---\n\n');
 
-    const systemPrompt = buildSystemPrompt(context);
-    this.logger.log(`Querying Gemini with ${matches.length} context chunks`);
-    yield* this.gemini.streamAnswer(systemPrompt, question);
-  }
+  const systemPrompt = buildSystemPrompt(context);
+  this.logger.log(`Querying with ${matches.length} context chunks`);
+  yield* this.gemini.streamAnswer(systemPrompt, question, model);
+}
 }

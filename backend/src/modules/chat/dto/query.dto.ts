@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, MinLength } from 'class-validator';
+import { IsString, IsNotEmpty, MinLength, IsOptional } from 'class-validator';
 
 export class QueryDto {
   @IsString()
@@ -9,4 +9,8 @@ export class QueryDto {
   @IsString()
   @IsNotEmpty()
   namespace: string;
+
+  @IsString()
+  @IsOptional()
+  model?: string;
 }

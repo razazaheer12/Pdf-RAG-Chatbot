@@ -21,3 +21,7 @@ export interface UploadResponse {
   chunks: number;
   message: string;
 }
+export interface ModelOption {
+  id: string;
+  label: string;
+}
